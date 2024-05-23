@@ -76,4 +76,4 @@
 ### Отправка о статусе тестов в телеграмм
 Чтобы у вас было такое же счастье, нужно сделать форк от репозитория и указать в настройках в repository secrets указать: 
 - `TELEGRAM_CHAT_ID`: найти можно с помощью бота [@getmyid_bot](https://t.me/getmyid_bot)
-- `TELEGRAM_BOT_TOKEN`: нужно сходить в [@BotFather](https://t.me/BotFather) и сделать там бота, там же и взять его токен
+- `TELEGRAM_BOT_TOKEN`: нужно сходить к [@BotFather](https://t.me/BotFather) и сделать бота, там же и взять токен нашего нового железного друга
