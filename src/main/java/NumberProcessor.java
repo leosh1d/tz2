@@ -12,10 +12,10 @@ public class NumberProcessor {
             List<Integer> numbers = readNumbersFromFile("src/numbers.txt");
 
             // Вычисления
-            int min = _min(numbers);
-            int max = _max(numbers);
-            int sum = _sum(numbers);
-            long mult = _mult(numbers); // Используем long для предотвращения переполнения
+            int min = getMin(numbers);
+            int max = getMax(numbers);
+            int sum = getSum(numbers);
+            long mult = getMult(numbers); // Используем long для предотвращения переполнения
 
             // Вывод результатов
             System.out.println("Минимальное: " + min);
@@ -44,7 +44,7 @@ public class NumberProcessor {
     }
 
     // Поиск минимального числа
-    public static int _min(List<Integer> numbers) {
+    public static int getMin(List<Integer> numbers) {
         int min = numbers.get(0);
         for (int number : numbers) {
             if (number < min) {
@@ -55,7 +55,7 @@ public class NumberProcessor {
     }
 
     // Поиск максимального числа
-    public static int _max(List<Integer> numbers) {
+    public static int getMax(List<Integer> numbers) {
         int max = numbers.get(0);
         for (int number : numbers) {
             if (number > max) {
@@ -66,7 +66,7 @@ public class NumberProcessor {
     }
 
     // Вычисление суммы чисел
-    public static int _sum(List<Integer> numbers) {
+    public static int getSum(List<Integer> numbers) {
         int sum = 0;
         for (int number : numbers) {
             sum += number;
@@ -75,7 +75,7 @@ public class NumberProcessor {
     }
 
     // Вычисление произведения чисел
-    public static long _mult(List<Integer> numbers) {
+    public static long getMult(List<Integer> numbers) {
         long product = 1;
         for (int number : numbers) {
             product *= number;
