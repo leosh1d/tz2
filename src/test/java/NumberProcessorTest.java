@@ -3,6 +3,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class NumberProcessorTest {
@@ -49,23 +51,11 @@ class NumberProcessorTest {
         System.out.println("Время выполнения для 5 млн. чисел: " + duration + " мс");
     }
 
-    @Disabled
     @Test
-    void failedTst() {
-        // Генерируем список с 5 млн. чисел
-        List<Integer> largeList = generateListByCount((int) Math.pow(10, 10));
-
-        long startTime = System.currentTimeMillis();
-
-        // Выполняем операции
-        NumberProcessor.getMin(largeList);
-        NumberProcessor.getMax(largeList);
-        NumberProcessor.getSum(largeList);
-        NumberProcessor.getMult(largeList);
-
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
-
-        System.out.println("Время выполнения для 5 млн. чисел: " + duration + " мс");
+    @Timeout(value = 1, unit = TimeUnit.SECONDS)
+    void failedTst() throws InterruptedException {
+        Thread.sleep(7777);
+        List<Integer> numbers = Arrays.asList(11,22,33,44);
+        assertEquals(351384, NumberProcessor.getMult(numbers));
     }
 }

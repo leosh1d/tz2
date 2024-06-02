@@ -2,9 +2,9 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -13,31 +13,49 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+
       - name: Cache Maven packages
         uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+
       - name: Build and test with Maven
         run: mvn -B test --file pom.xml
+
       - name: Send Telegram notification on success
         if: success()
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: "✅ Сборка прошла успешно!"
+          message: "Всё ок!"
+
       - name: Send Telegram notification on failure
         if: failure()
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: "❌ Сборка завершилась с ошибкой!"
+          format: markdown
+          message: |
+            🛑 *Test Failure Notification* 🛑
+            Repository: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            Committer: ${{ github.actor }}
+            Workflow: ${{ github.workflow }}
+            Job: ${{ github.job }}
+            📝 *Message:* Tests have failed in the CI pipeline.
+            [Check your Tests Results](${{
+              github.server_url
+            }}/${{ github.repository }}/actions/runs/${{
+              github.run_id
+            }})
