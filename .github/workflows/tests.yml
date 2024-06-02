@@ -1,45 +1,28 @@
 name: Java CI with Maven
-
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
-
+    branches: [ "main" ]
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up JDK 21
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-
-      - name: Cache Maven packages
-        uses: actions/cache@v3
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml -DskipTests
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
         with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: Build and test with Maven
-        run: mvn -B test --file pom.xml
-
-      - name: Send Telegram notification on success
-        if: success()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: "Всё ок!"
-
-      - name: Send Telegram notification on failure
+          name: build-artifact
+          path: target/
+      - name: Notify Telegram on failure build
         if: failure()
         uses: appleboy/telegram-action@master
         with:
@@ -47,6 +30,123 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
+            *Билд с ошибкой ❌*
+      - name: Notify Telegram on success build
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            *Билд успешный ✅*
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifact
+          path: target/
+      - name: Test with Maven
+        run: mvn -B test --file pom.xml
+      - name: Save test results
+        if: failure()
+        run: |
+          mkdir -p junit
+          cp target/surefire-reports/*.xml junit/
+      - name: Create test failure report
+        id: test
+        if: failure()
+        # TODO: create a .sh script, not using cat
+        run: |
+          set +e
+          grep -E "<testcase|<failure" junit/*.xml | grep -B 1 "<failure" > failure-report.txt
+          cat <<'EOF' > parse_testcases.sh
+          #!/bin/bash
+
+          TXT_FILE="failure-report.txt"
+
+          print_test_info() {
+            if [[ -n "$name" ]]; then
+              failure_message=$(echo "$failure_message" | sed 's/&lt;/</g; s/&gt;/>/g')
+              info="\nTest Case: $name\nClass Name: $classname\nFailure Message: $failure_message\nFailure Type: $failure_type\n-----------------------------------"
+              echo -e "$info"
+            fi
+          }
+
+          name=""
+          classname=""
+          failure_message=""
+          failure_type=""
+          in_cdata=false
+          info=""
+
+          while IFS= read -r line; do
+            if [[ $line =~ \<testcase ]]; then
+              info+=$(print_test_info)
+
+              name=$(echo "$line" | grep -oP 'name="\K[^"]+')
+              classname=$(echo "$line" | grep -oP 'classname="\K[^"]+')
+              failure_message=""
+              failure_type=""
+              in_cdata=false
+            elif [[ $line =~ \<failure ]]; then
+              failure_message=$(echo "$line" | grep -oP 'message="\K[^"]+')
+              failure_type=$(echo "$line" | grep -oP 'type="\K[^"]+')
+              in_cdata=true
+            elif [[ $line =~ \]\]\> ]]; then
+              in_cdata=false
+              failure_cdata=$(echo "$line" | sed -n 's/.*\[CDATA\[\(.*\)\]\].*/\1/p')
+              failure_message="${failure_message}${failure_cdata}"
+            elif [[ $in_cdata == true ]]; then
+              failure_cdata="${line}"
+              failure_message="${failure_message}${failure_cdata}"
+            elif [[ $line =~ \</testcase ]]; then
+              info+=$(print_test_info)
+              name=""
+              classname=""
+              failure_message=""
+              failure_type=""
+              failure_cdata=""
+            fi
+          done < "$TXT_FILE"
+
+          info+=$(print_test_info)
+          echo "$info"
+          EOF
+          chmod +x parse_testcases.sh
+          a=$(./parse_testcases.sh)
+          echo "STRING<<EOF" >> $GITHUB_ENV
+          echo "$a" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: Notify Telegram on failure
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: "Все ок"
+      - name: Notify Telegram on success
+        if: failture()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message:  |
             🛑 *Test Failure Notification* 🛑
             Repository: ${{ github.repository }}
             Commit: ${{ github.sha }}
@@ -55,7 +155,7 @@ jobs:
             Job: ${{ github.job }}
             📝 *Message:* Tests have failed in the CI pipeline.
             [Check your Tests Results](${{
-              github.server_url
+            github.server_url
             }}/${{ github.repository }}/actions/runs/${{
-              github.run_id
+            github.run_id
             }})

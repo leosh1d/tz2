@@ -54,7 +54,7 @@ class NumberProcessorTest {
     @Test
     @Timeout(value = 1, unit = TimeUnit.SECONDS)
     void failedTst() throws InterruptedException {
-        Thread.sleep(7777);
+        Thread.sleep(2000);
         List<Integer> numbers = Arrays.asList(11,22,33,44);
         assertEquals(2, NumberProcessor.getMult(numbers));
     }
