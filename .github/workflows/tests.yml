@@ -140,7 +140,7 @@ jobs:
           format: markdown
           message: "Все ок"
       - name: Notify Telegram on success
-        if: failture()
+        if: failure()
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
