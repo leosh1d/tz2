@@ -56,6 +56,6 @@ class NumberProcessorTest {
     void failedTst() throws InterruptedException {
         Thread.sleep(7777);
         List<Integer> numbers = Arrays.asList(11,22,33,44);
-        assertEquals(351384, NumberProcessor.getMult(numbers));
+        assertEquals(2, NumberProcessor.getMult(numbers));
     }
 }
