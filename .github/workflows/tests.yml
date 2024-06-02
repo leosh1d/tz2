@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
@@ -31,6 +31,11 @@ jobs:
           format: markdown
           message: |
             *Билд с ошибкой ❌*
+            Репозиторий: ${{ github.repository }}
+                       Коммит: ${{ github.sha }}
+                       Актор: ${{ github.actor }}
+                       Воркфлоу: ${{ github.workflow }}
+                       Job: ${{ github.job }}
       - name: Notify Telegram on success build
         if: success()
         uses: appleboy/telegram-action@master
@@ -40,6 +45,11 @@ jobs:
           format: markdown
           message: |
             *Билд успешный ✅*
+            Репозиторий: ${{ github.repository }}
+            Коммит: ${{ github.sha }}
+            Актор: ${{ github.actor }}
+            Воркфлоу: ${{ github.workflow }}
+            Job: ${{ github.job }}
 
   test:
     runs-on: ubuntu-latest
