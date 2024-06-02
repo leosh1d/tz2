@@ -78,7 +78,13 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
-          message: "Все ок"
+          message: | 
+          Репозиторий: ${{ github.repository }}
+          Коммит: ${{ github.sha }}
+          Актор: ${{ github.actor }}
+          Воркфлоу: ${{ github.workflow }}
+          Job: ${{ github.job }}
+
       - name: Notify Telegram on success
         if: failure()
         uses: appleboy/telegram-action@master
